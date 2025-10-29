@@ -1,0 +1,6 @@
+venv/
+frames/
+__pycache__/
+*.mp4
+*.log
+*.txt
