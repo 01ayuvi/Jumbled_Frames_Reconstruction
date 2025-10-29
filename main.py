@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 Jumbled Frames Reconstruction - ULTRA FAST MODE
 Author: Ayuvi Chaudhary
@@ -11,12 +10,13 @@ import glob
 import os
 import time
 
-# ========== CONFIGURATION ==========
+# ========== SETTINGS ==========
+FAST_MODE = True  # Set to False for full accuracy mode
 INPUT_VIDEO = "jumbled_video.mp4"
 OUTPUT_VIDEO = "unjumbled_video.mp4"
 FPS = 30
-FRAME_RESIZE_SCALE = 0.5  # reduce size for speed
-NEIGHBOR_LIMIT = 30       # limit comparisons
+FRAME_RESIZE_SCALE = 0.5  # resize for faster comparison
+NEIGHBOR_LIMIT = 30       # compare only a subset of frames to speed up
 
 # ========== STEP 1: Extract Frames ==========
 os.makedirs("frames", exist_ok=True)
@@ -45,8 +45,9 @@ n = len(frames)
 
 # ========== STEP 3: Define Fast Histogram Similarity ==========
 def frame_similarity(f1, f2):
-    hist1 = cv2.calcHist([f1], [0, 1, 2], None, [8,8,8], [0,256,0,256,0,256])
-    hist2 = cv2.calcHist([f2], [0, 1, 2], None, [8,8,8], [0,256,0,256,0,256])
+    """Compare two frames using color histograms (fast mode)."""
+    hist1 = cv2.calcHist([f1], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256])
+    hist2 = cv2.calcHist([f2], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256])
     cv2.normalize(hist1, hist1)
     cv2.normalize(hist2, hist2)
     return cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
@@ -63,6 +64,7 @@ for _ in range(n - 1):
     current = order[-1]
     best_match, best_score = -1, -1
 
+    # Limit comparisons for speed
     candidates = [i for i in range(n) if i not in used]
     if len(candidates) > NEIGHBOR_LIMIT:
         candidates = np.random.choice(candidates, NEIGHBOR_LIMIT, replace=False)
@@ -94,90 +96,3 @@ for idx in order:
 
 out.release()
 print(f"[DONE] Saved '{OUTPUT_VIDEO}'. Time log written to 'time_log.txt'.")
-=======
-"""
-Jumbled Frames Reconstruction - Final Code
-Author: Ayuvi Chaudhary
-Challenge: TECDIA Internship Task
-Description: Reconstructs the original sequence of a 10-sec, 30 fps jumbled video (≈300 frames).
-"""
-
-import cv2
-import numpy as np
-import glob
-import os
-import time
-
-# ========== CONFIGURATION ==========
-INPUT_VIDEO = "jumbled_video.mp4"
-OUTPUT_VIDEO = "unjumbled_video.mp4"
-FPS = 30  # updated spec
-
-# ========== STEP 1: Extract Frames ==========
-os.makedirs("frames", exist_ok=True)
-cap = cv2.VideoCapture(INPUT_VIDEO)
-frame_count = 0
-
-print("[INFO] Extracting frames...")
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-    cv2.imwrite(f"frames/frame_{frame_count:03d}.jpg", frame)
-    frame_count += 1
-
-cap.release()
-print(f"[INFO] Extracted {frame_count} frames.\n")
-
-# ========== STEP 2: Define Frame Similarity ==========
-def frame_similarity(frame1, frame2):
-    """Compare two frames using color histogram correlation."""
-    hist1 = cv2.calcHist([frame1], [0, 1, 2], None, [8,8,8], [0,256,0,256,0,256])
-    hist2 = cv2.calcHist([frame2], [0, 1, 2], None, [8,8,8], [0,256,0,256,0,256])
-    cv2.normalize(hist1, hist1)
-    cv2.normalize(hist2, hist2)
-    return cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
-
-# ========== STEP 3: Reconstruct Order ==========
-print("[INFO] Reconstructing frame order...")
-start_time = time.time()
-
-frame_files = sorted(glob.glob("frames/*.jpg"))
-frames = [cv2.imread(f) for f in frame_files]
-n = len(frames)
-used, order = set(), []
-
-current = 0  # starting frame
-order.append(current)
-used.add(current)
-
-for _ in range(n - 1):
-    best_match, best_score = -1, -1
-    for i in range(n):
-        if i in used:
-            continue
-        score = frame_similarity(frames[current], frames[i])
-        if score > best_score:
-            best_score, best_match = score, i
-    order.append(best_match)
-    used.add(best_match)
-    current = best_match
-
-end_time = time.time()
-execution_time = end_time - start_time
-print(f"[INFO] Reconstruction complete in {execution_time:.2f} s.\n")
-
-with open("time_log.txt", "w") as f:
-    f.write(f"Execution Time: {execution_time:.2f} seconds\n")
-
-# ========== STEP 4: Export Reconstructed Video ==========
-print("[INFO] Saving reconstructed video...")
-height, width, _ = frames[0].shape
-out = cv2.VideoWriter(OUTPUT_VIDEO, cv2.VideoWriter_fourcc(*'mp4v'), FPS, (width, height))
-
-for idx in order:
-    out.write(frames[idx])
-
-out.release()
-print(f"[DONE] Saved '{OUTPUT_VIDEO}'. Time log written to 'time_log.txt'.")
->>>>>>> 09d3a3353011426c8d98954521543a1cc9bdc4c1
