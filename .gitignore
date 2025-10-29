@@ -1,6 +1,15 @@
+# Virtual environment
 venv/
-frames/
-__pycache__/
+venv312/
+
+# Video files
 *.mp4
+*.avi
+*.mov
+
+# Frames folder
+frames/
+
+# Cache and temporary files
+__pycache__/
 *.log
-*.txt
