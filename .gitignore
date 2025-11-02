@@ -13,3 +13,6 @@ frames/
 # Cache and temporary files
 __pycache__/
 *.log
+
+# Ignore local Python packages and wheels
+*.whl
